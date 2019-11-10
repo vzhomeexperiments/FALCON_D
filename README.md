@@ -6,13 +6,13 @@
 
 ## Goal
 
-Develop robot that works just to buy assets once the market is in identified bullish state
+Develop robot that works just to buy or sell assets once the market is in identified bullish state
 
 Trading strategy based on:
 
 * Asset Technical Analysis (Avoid Negative Swap, current price position must not be below/above 950D Moving Average, not on it's upper/lower region) 
 * Market Fundamental Analysis (Trading Pair Selection based on economy differences, avoiding Risky assets affected by big news events e.g. Brexit)
-* Advanced trading execution in one direction (buy/sell)
+* Trading execution in one direction (buy/sell) which has to be selected by user
 
 ### Code source
 
@@ -74,9 +74,14 @@ Trader should avoid directly deploy this robot on the asset that has reaching it
 * H1 chart, same parameters as we defined
 * Moving Averages filter D950/D1
 
-## Special condition to activate de-activate robots on real account
+# Development Check List (on Strategy Tester)
 
-Robots must only be activated on the real trading account when the price action moved from it's lowest/upper position.
+- Time hold order is working
+- JPY pairs are working well
+- Both Buy/Sell orders are opened
+- Only Sell/Only Buy
+- Both Buy/Sell orders are blocked
+- Multi positions are possible
 
 # Demo Testing
 
@@ -88,21 +93,33 @@ Robots must only be activated on the real trading account when the price action 
 
 # Robot Behavior observations
 
-## Entry
+Only use it on H1 charts!!!
 
--- 
+## Entry
 
 ## Exits
 
+## Filters
+
+
 ## Money Management
-
-
 
 ## Generic observations
 
-- 
+- only sell/buy positions selectable
+- can use RSI based filter to detect overbought/oversold asset:
 
-- only sell/buy positions
+* Filter all buy trades when RSI is > 70
 
+`extern int     RSI_NoBuyFilter                  = 70;`
+
+* Filter all sell trades when RSI is < 30
+
+`extern int     RSI_NoSellFilter                 = 30;`
+
+* Removes above mentioned filters:
+
+`extern int     RSI_NoBuyFilter                  = 100;`
+`extern int     RSI_NoSellFilter                 = 0;`
 
 

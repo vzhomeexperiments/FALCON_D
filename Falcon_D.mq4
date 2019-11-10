@@ -18,11 +18,11 @@
 #property copyright "Copyright 2019, Vladimir Zhbanko"
 #property link      "lucas@blackalgotechnologies.com"
 #property link      "https://vladdsm.github.io/myblog_attempt/"
-#property version   "1.001"  
+#property version   "1.002"  
 #property strict
 /* 
 2019-11-09 First development version
-
+2019-11-10 2nd development version
 Falcon D: 
 - Simpler system based on rules and filters
 - Must be used in only one direction
@@ -49,7 +49,11 @@ extern int     StartHour                        = 10;
 extern int     MinPipLimit                      = 0;
 extern int     FastMAPeriod                     = 1;
 extern int     SlowMAPeriod                     = 950;
+extern int     RSI_NoBuyFilter                  = 70;
+extern int     RSI_NoSellFilter                 = 30;
 extern int     TimeMaxHold                      = 1440; //max order close time in minutes
+extern bool    Buy_True                         = True;
+extern bool    Sell_True                        = True;
 extern bool    closeAllOnFridays                = False; //close all orders on Friday 1hr before market closure
 extern bool    use_market_type                  = False; //use market type trading policy
 
@@ -136,7 +140,7 @@ double StopHidden,TakeHidden;
 int YenPairAdjustFactor;
 int    P;
 double myATR;
-double FastMA1, SlowMA1, Price_0, Price_X;
+double FastMA1, SlowMA1, Price_0, Price_X, RSI_D14;
 
 // TDL 3: Declaring Variables (and the extern variables above)
 
@@ -259,22 +263,25 @@ Price_X = Open[StartHour];     //price of the asset at time XX:00
 
 //Filter condition to open trades variables   
 SlowMA1 = iMA(Symbol(), PERIOD_D1, SlowMAPeriod,0,MODE_SMA, PRICE_CLOSE,1);
-FastMA1 = iMA(Symbol(), PERIOD_D1, FastMAPeriod,0,MODE_SMA, PRICE_CLOSE,1);  
+FastMA1 = iMA(Symbol(), PERIOD_D1, FastMAPeriod,0,MODE_SMA, PRICE_CLOSE,1);
+RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);  
 
 // Setting of the trading flag is done in the dedicated functions
    
    FlagBuy   = GetTradeFlagCondition(Price_0,Price_X,
-                                     SlowMA1, FastMA1,
+                                     SlowMA1, FastMA1, RSI_D14,
+                                     RSI_NoBuyFilter, RSI_NoSellFilter,
                                      StartHour, MinPipLimit, P, 
                                      "buy"); //which direction to check "buy" "sell"
              
    FlagSell = GetTradeFlagCondition(Price_0,Price_X,
-                                     SlowMA1, FastMA1,
+                                     SlowMA1, FastMA1, RSI_D14,
+                                     RSI_NoBuyFilter, RSI_NoSellFilter,
                                      StartHour, MinPipLimit, P, 
                                      "sell"); //which direction to check "buy" "sell"
    
-   if(FlagBuy) CrossTriggered1=1;
-   if(FlagSell) CrossTriggered1=2;
+   if(FlagBuy && Buy_True) CrossTriggered1=1;
+   if(FlagSell && Sell_True) CrossTriggered1=2;
    
    //Exit variables:
    if(closeAllOnFridays)
@@ -2402,7 +2409,8 @@ string GetErrorDescription(int error)
 //+------------------------------------------------------------------+
    
 bool   GetTradeFlagCondition(double Price_H0, double Price_HX,
-                             double Slow_MA, double Fast_MA,
+                             double Slow_MA, double Fast_MA, double RSI_Val,
+                             int RSI_NoBuyVal, int RSI_NoSellVal,
                              int Hour_0, int Pip_X, double PointVal, 
                              string DirectionCheck) //which direction to check "buy" "sell"
   {
@@ -2420,11 +2428,11 @@ bool   GetTradeFlagCondition(double Price_H0, double Price_HX,
       //check buy condition
       if(DirectionCheck == "buy")
      {
-       if(Price_H0 < Price_HX - Pip_X*PointVal && Fast_MA > Slow_MA) result = True;
+       if(Price_H0 < Price_HX - Pip_X*PointVal && Fast_MA > Slow_MA && RSI_Val < RSI_NoBuyVal) result = True;
       //check sell condition                             
      } else if(DirectionCheck == "sell")
               {
-                if(Price_H0 > Price_HX + Pip_X*PointVal && Fast_MA < Slow_MA) result = True;
+                if(Price_H0 > Price_HX + Pip_X*PointVal && Fast_MA < Slow_MA && RSI_Val > RSI_NoSellVal) result = True;
               }
       
       
@@ -2436,10 +2444,11 @@ bool   GetTradeFlagCondition(double Price_H0, double Price_HX,
    return(result);
 
 /* Trading Idea: 
-   
+   RSI_D14,
+                                     RSI_NoBuyFilter, RSI_NoSellFilter,
    Entry:  Price at defined hour is retraced below defined level
    Filter: Use D950 Moving Average to determine long term price direction
-   Filter: Use D950 RSA/Channel value to determine if we are not in overbought/oversold situation TDL
+   Filter: Use D950 RSA/Channel value to determine if we are not in overbought/oversold situation 
    
  
 
