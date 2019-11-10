@@ -6,23 +6,22 @@
 #include <01_GetHistoryOrder.mqh>
 #include <02_OrderProfitToCSV.mqh>
 #include <03_ReadCommandFromCSV.mqh>
+#include <06_NormalizeDouble.mqh>
 #include <08_TerminalNumber.mqh>
 #include <096_ReadMarketTypeFromCSV.mqh>
 #include <10_isNewBar.mqh>
-#include <14_ReadPriceChangePredictionFromAI.mqh>
-#include <15_ReadPriceChangeTriggerFromAI.mqh>
-#include <16_LogMarketType.mqh>
-#include <17_CheckIfMarketTypePolicyIsOn.mqh>
+
 
 #property copyright "Copyright 2015, Black Algo Technologies Pte Ltd"
 #property copyright "Copyright 2019, Vladimir Zhbanko"
 #property link      "lucas@blackalgotechnologies.com"
 #property link      "https://vladdsm.github.io/myblog_attempt/"
-#property version   "1.002"  
+#property version   "2.002"  
 #property strict
 /* 
 2019-11-09 First development version
 2019-11-10 2nd development version
+2019-11-10 Production version
 Falcon D: 
 - Simpler system based on rules and filters
 - Must be used in only one direction
@@ -141,7 +140,7 @@ int YenPairAdjustFactor;
 int    P;
 double myATR;
 double FastMA1, SlowMA1, Price_0, Price_X, RSI_D14;
-
+double MyPoint;
 // TDL 3: Declaring Variables (and the extern variables above)
 
 double KeltnerUpper1, KeltnerLower1;
@@ -197,6 +196,7 @@ int init()
 //---------             
    
    P=GetP(); // To account for 5 digit brokers. Used to convert pips to decimal place
+   MyPoint = ND(P*Point());
    YenPairAdjustFactor=GetYenAdjustFactor(); // Adjust for YenPair
 
 //----------(Hidden) TP, SL and Breakeven Stops Variables-----------  
@@ -271,13 +271,13 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
    FlagBuy   = GetTradeFlagCondition(Price_0,Price_X,
                                      SlowMA1, FastMA1, RSI_D14,
                                      RSI_NoBuyFilter, RSI_NoSellFilter,
-                                     StartHour, MinPipLimit, P, 
+                                     StartHour, MinPipLimit, MyPoint, 
                                      "buy"); //which direction to check "buy" "sell"
              
    FlagSell = GetTradeFlagCondition(Price_0,Price_X,
                                      SlowMA1, FastMA1, RSI_D14,
                                      RSI_NoBuyFilter, RSI_NoSellFilter,
-                                     StartHour, MinPipLimit, P, 
+                                     StartHour, MinPipLimit, MyPoint, 
                                      "sell"); //which direction to check "buy" "sell"
    
    if(FlagBuy && Buy_True) CrossTriggered1=1;
@@ -367,9 +367,6 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
               { // Open Long Positions
                OrderNumber=OpenPositionMarket(OP_BUY,GetLot(IsSizingOn,Lots,Risk,YenPairAdjustFactor,Stop,P),Stop,Take,MagicNumber,Slippage,OnJournaling,P,IsECNbroker,MaxRetriesPerTick,RetryInterval);
    
-               // Log current MarketType to the file in the sandbox
-               LogMarketType(MagicNumber, OrderNumber, MyMarketType);
-   
                // Set Stop Loss value for Hidden SL
                if(UseHiddenStopLoss) SetStopLossHidden(OnJournaling,IsVolatilityStopLossOn_Hidden,FixedStopLoss_Hidden,myATR,VolBasedSLMultiplier_Hidden,P,OrderNumber);
    
@@ -387,9 +384,6 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
             if(!isFridayActive && TradeAllowed && FlagSell && EntrySignal(CrossTriggered1)==2)
               { // Open Short Positions
                OrderNumber=OpenPositionMarket(OP_SELL,GetLot(IsSizingOn,Lots,Risk,YenPairAdjustFactor,Stop,P),Stop,Take,MagicNumber,Slippage,OnJournaling,P,IsECNbroker,MaxRetriesPerTick,RetryInterval);
-   
-               // Log current MarketType to the file in the sandbox
-               LogMarketType(MagicNumber, OrderNumber, MyMarketType);
    
                // Set Stop Loss value for Hidden SL
                if(UseHiddenStopLoss) SetStopLossHidden(OnJournaling,IsVolatilityStopLossOn_Hidden,FixedStopLoss_Hidden,myATR,VolBasedSLMultiplier_Hidden,P,OrderNumber);
