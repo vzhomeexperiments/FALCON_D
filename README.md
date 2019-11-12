@@ -4,29 +4,29 @@
 
 20191109 Repository to develop simpler trading robot. 
 
+**NB: Use on your own risk!!!**
+
+Implemented based on the FALCON template. Trading robot can be used together with *Decision Support System* as described in the 'Lazy Trading Educational Project'. Robot logic is implemented based on states. States are defined in the custom functions that 'confines' a strategy space in one place. Obviously the best is to understand this robot using Strategy Tester, well only use it for H1 charts!
+
 ## Goal
 
-Develop robot that works just to buy or sell assets once the market is in identified bullish state
+Develop robot that works just to buy or sell assets once the market is in identified bullish or bearish state
 
 Trading strategy based on:
 
-* Asset Technical Analysis (Avoid Negative Swap, current price position must not be below/above 950D Moving Average, not on it's upper/lower region) 
-* Market Fundamental Analysis (Trading Pair Selection based on economy differences, avoiding Risky assets affected by big news events e.g. Brexit)
-* Trading execution in one direction (buy/sell) which has to be selected by user
+* Asset Technical Analysis (e.g. Avoid Negative Swap, current price position must not be below/above 950D Moving Average, not on it's upper/lower region) 
+* Asset Fundamental Analysis (e.g. Trading Pair Selection based on economy strenght differences, avoiding Risky assets affected by big news events, etc)
+* Trading execution that can be enabled conditionally in one or both directions (buy/sell) which has to be selected by user
 
 ### Code source
 
-Original code is taken from: FALCON_F2
+Original code is taken from: FALCON_F2, some ideas are borrowed from ForexBoat course on Forex
 
-### Modifications
-
-2019-09-11 New Version
-
-# Full Strategy Development
+# Example of setups
 
 ## Robot Setup
 
-* only using max 10 charts with pairs that we know (e.g. USD/GBP/EUR/CHF/CAD)
+* Using just few charts with Assets that we know (e.g. USD/GBP/EUR/CHF)
 
 ## Decision support for Pairs selection
 
@@ -38,11 +38,11 @@ Developing data strategy support writer [StrategySupportWriter.mq4](https://gith
 * write data to the csv file
 * write other values for each pairs like Moving Averages and their differences, etc
 
-This file can be used to derive decision on applying robot on charts or not... e.g. do not use if there is a too high negative swap
+This file can be used to derive decision on applying robot on charts or not... e.g. one of idea can be to use pair and tradind direction with a positive swap
 
 ### Fundamental analysis
 
-Trader should also decompose symbol name and to evaluate each currency in terms of economic weakness strenght. This is example to decide when to use Survival robot on the asset 'EURUSD':
+Trader may also decompose symbol name and to evaluate each currency in terms of relative economic weakness/strenght. This is example to decide when to use robot on the asset 'EURUSD':
 
 | Base | Economy | Quote | Economy | Decision |
 |:----:|---------|-------|---------|----------|
@@ -59,6 +59,7 @@ Trader should avoid directly deploy this robot on the asset that has reaching it
 * Leverage 1:100
 * Lots 0.01 
 * stoploss 600 pips
+* maximum 1 position at the time
 * Starting Account size 1000 CHF 
 * 0.01 lots, 1:100 leverage
 * gradually increase lot size (0.01 if account < 1500; 0.02 if account > 1500 and < 2500 etc)
@@ -77,9 +78,9 @@ Trader should avoid directly deploy this robot on the asset that has reaching it
 # Development Check List (on Strategy Tester)
 
 - Time hold order is working
-- JPY pairs are working well
+- JPY pairs targets are working well
 - Both Buy/Sell orders are opened
-- Only Sell/Only Buy
+- Only Buy | Only Sell
 - Both Buy/Sell orders are blocked
 - Multi positions are possible
 
@@ -87,27 +88,43 @@ Trader should avoid directly deploy this robot on the asset that has reaching it
 
 ## FALCON_D
 
-### 2019xxxx Status:
+### YYYYMMDD Status:
 
-### 2019xxxx Status:
+- Write your results
+
+### YYYYMMDD Status:
+
+- Write your results
 
 # Robot Behavior observations
 
-Only use it on H1 charts!!!
+NB: Only use it on H1 charts!!!
 
 ## Entry
 
+- Entry is simply decided if the price at Hour X would change more than X pips from the beginning of the day (Hour 0). Price change is in the opposite direction from the trend
+
 ## Exits
+
+- Fixed time in minutes e.g. 1440min is 24 hours
+- Obviously Hard Stops that can be setup using variety of options e.g. volatility of fixed
 
 ## Filters
 
-
-## Money Management
-
-## Generic observations
+### User defined
 
 - only sell/buy positions selectable
-- can use RSI based filter to detect overbought/oversold asset:
+
+### Moving Average
+
+- D1 price is above D750 enables buy trades
+- D1 price is below D750 enables sell trades
+
+Note: D750/D1 is customizable in External Parameters
+
+### RSI
+
+- can use RSI based filter to detect overbought/oversold asset. Period of the robot is hard coded in the code to be 14 Days:
 
 * Filter all buy trades when RSI is > 70
 
@@ -121,5 +138,4 @@ Only use it on H1 charts!!!
 
 `extern int     RSI_NoBuyFilter                  = 100;`
 `extern int     RSI_NoSellFilter                 = 0;`
-
 
