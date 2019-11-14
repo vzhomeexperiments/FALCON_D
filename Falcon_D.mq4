@@ -16,15 +16,16 @@
 #property copyright "Copyright 2019, Vladimir Zhbanko"
 #property link      "lucas@blackalgotechnologies.com"
 #property link      "https://vladdsm.github.io/myblog_attempt/"
-#property version   "2.002"  
+#property version   "3.000"  
 #property strict
 /* 
 2019-11-09 First development version
 2019-11-10 2nd development version
 2019-11-10 Production version
+2019-11-14 Added option to avoid using filters
 Falcon D: 
 - Simpler system based on rules and filters
-- Must be used in only one direction
+- Can be used in only one direction
 # Trading directions:
 # 1. Long  BU
 # 2. Short BE
@@ -46,6 +47,7 @@ extern bool    EnableDashboard                  = True; // Turn on Dashboard
 extern string  Header2="----------Trading Rules Variables -----------";
 extern int     StartHour                        = 10; 
 extern int     MinPipLimit                      = 0;
+extern bool    UseMAFilter                      = True;
 extern int     FastMAPeriod                     = 1;
 extern int     SlowMAPeriod                     = 950;
 extern int     RSI_NoBuyFilter                  = 70;
@@ -258,8 +260,8 @@ int start()
 //----------Entry & Exit Variables-----------
    //Entry variables:
 //Strategy conditions variables
-Price_0 = Open[0];             //price of the asset at time 00:00  
-Price_X = Open[StartHour];     //price of the asset at time XX:00  
+Price_0 = Open[StartHour];             //price of the asset at time 00:00 (e.g.:10 hours ago)  
+Price_X = Open[0];                     //price of the asset at time XX:00 (at the time of check) 
 
 //Filter condition to open trades variables   
 SlowMA1 = iMA(Symbol(), PERIOD_D1, SlowMAPeriod,0,MODE_SMA, PRICE_CLOSE,1);
@@ -269,14 +271,14 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
 // Setting of the trading flag is done in the dedicated functions
    
    FlagBuy   = GetTradeFlagCondition(Price_0,Price_X,
-                                     SlowMA1, FastMA1, RSI_D14,
-                                     RSI_NoBuyFilter, RSI_NoSellFilter,
+                                     UseMAFilter, SlowMA1, FastMA1, 
+                                     RSI_D14, RSI_NoBuyFilter, RSI_NoSellFilter,
                                      StartHour, MinPipLimit, MyPoint, 
                                      "buy"); //which direction to check "buy" "sell"
              
-   FlagSell = GetTradeFlagCondition(Price_0,Price_X,
-                                     SlowMA1, FastMA1, RSI_D14,
-                                     RSI_NoBuyFilter, RSI_NoSellFilter,
+   FlagSell  = GetTradeFlagCondition(Price_0,Price_X,
+                                     UseMAFilter, SlowMA1, FastMA1, 
+                                     RSI_D14, RSI_NoBuyFilter, RSI_NoSellFilter,
                                      StartHour, MinPipLimit, MyPoint, 
                                      "sell"); //which direction to check "buy" "sell"
    
@@ -407,14 +409,14 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
 
 //----
     //adding dashboard
-    if(EnableDashboard==True) ShowDashboard("Magic Number", MagicNumber,    //int
-                                            "int var: ", 1,    //int
-                                            "int var: ", 1,              //int
-                                            "double var: ", 1.1,            //double
-                                            "int var: ", 1,             //int
-                                            "double var: ", 2.2,           //double
-                                            "int var: ", 1,              //int
-                                            "double var: ", 3.3);           //double
+    if(EnableDashboard==True) ShowDashboard("int Magic Number", MagicNumber,    //int
+                                            "int StartHour: ", StartHour,    //int
+                                            "int MinPipLimit: ", MinPipLimit,              //int
+                                            "double Price@Hour0: ", Price_0,            //double
+                                            "int RSI_NoBuyFilter: ", RSI_NoBuyFilter,             //int
+                                            "double Price@StartHour: ", Price_X,           //double
+                                            "int RSI_NoSellFilter: ", RSI_NoSellFilter,              //int
+                                            "double RSI_D14: ", RSI_D14);           //double
                                             
 
    return(0);
@@ -2403,8 +2405,8 @@ string GetErrorDescription(int error)
 //+------------------------------------------------------------------+
    
 bool   GetTradeFlagCondition(double Price_H0, double Price_HX,
-                             double Slow_MA, double Fast_MA, double RSI_Val,
-                             int RSI_NoBuyVal, int RSI_NoSellVal,
+                             bool UseMA, double Slow_MA, double Fast_MA, 
+                             double RSI_Val, int RSI_NoBuyVal, int RSI_NoSellVal,
                              int Hour_0, int Pip_X, double PointVal, 
                              string DirectionCheck) //which direction to check "buy" "sell"
   {
@@ -2422,11 +2424,26 @@ bool   GetTradeFlagCondition(double Price_H0, double Price_HX,
       //check buy condition
       if(DirectionCheck == "buy")
      {
-       if(Price_H0 < Price_HX - Pip_X*PointVal && Fast_MA > Slow_MA && RSI_Val < RSI_NoBuyVal) result = True;
+       if(UseMA)
+         {
+          if(Price_HX < Price_H0 - Pip_X*PointVal && Fast_MA > Slow_MA && RSI_Val < RSI_NoBuyVal) result = True;   
+         } else
+             {
+              if(Price_HX < Price_H0 - Pip_X*PointVal && RSI_Val < RSI_NoBuyVal) result = True;   
+             }
+              
       //check sell condition                             
      } else if(DirectionCheck == "sell")
               {
-                if(Price_H0 > Price_HX + Pip_X*PointVal && Fast_MA < Slow_MA && RSI_Val > RSI_NoSellVal) result = True;
+                if(UseMA)
+                  {
+                   if(Price_HX > Price_H0 + Pip_X*PointVal && Fast_MA < Slow_MA && RSI_Val > RSI_NoSellVal) result = True;
+                  } else
+                      {
+                       if(Price_HX > Price_H0 + Pip_X*PointVal && RSI_Val > RSI_NoSellVal) result = True;
+                      }
+                
+                
               }
       
       
@@ -2560,21 +2577,21 @@ Comment(
       + new_line
       + Descr2 + space + IntegerToString(Param1)
       + new_line
-      + Descr3 + space + DoubleToString(Param2, 1)
+      + Descr3 + space + DoubleToString(Param2, 3)
       + new_line        
       + underscore  
       + new_line 
       + new_line
       + Descr4 + space + IntegerToString(Param3)
       + new_line
-      + Descr5 + space + DoubleToString(Param4, 1)
+      + Descr5 + space + DoubleToString(Param4, 3)
       + new_line        
       + underscore  
       + new_line 
       + new_line
       + Descr6 + space + IntegerToString(Param5)
       + new_line
-      + Descr7 + space + DoubleToString(Param6, 1)
+      + Descr7 + space + DoubleToString(Param6, 3)
       + new_line        
       + underscore  
       + "");
