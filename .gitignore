@@ -5,3 +5,8 @@ SimpleSystem v9.0.mq4
 SIM/*
 STR_dev/*
 TS/*
+.Rproj.user
+FALCON_D.Rproj
+.RData
+.Rhistory
+Simulation/Y2016_SimulationFalconD.nb.html

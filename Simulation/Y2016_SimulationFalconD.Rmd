@@ -1,0 +1,175 @@
+---
+title: "Simulation of Trading Strategy Falcon_D"
+output: html_notebook
+author: Vladimir Zhbanko
+date: 20191202
+---
+
+
+#### Fixed parameters
+
+| Variable                 | Value |
+|--------------------------|:-----:|
+| UseMAFilter              | TRUE  |
+| RSI_NoBuyFilter          |   70  |
+| RSI_NoSellFilter         |   30  |
+| TimeMaxHold              | 28800 |
+| Buy_True                 | TRUE  |
+| Sell_True                | TRUE  |
+| closeAllOnFridays        | FALSE |
+| use_market_type          | FALSE |
+| IsSizingOn               | TRUE  |
+| Risk                     | 1     |
+| MaxPositionsAllowed      | 10    |
+| UseFixedStopLoss         | TRUE  |
+| FixedStopLoss            | 300   |
+| IsVolatilityStopOn       | TRUE  |
+| VolBasedTPMultiplier     | 12    |
+| UseFixedTakeProfit       | FALSE |
+| IsVolatilityTakeProfitOn | TRUE  |
+| VolBasedTPMultiplier     | 6     |
+| atr_period               | 15    |
+
+#### Parameters to optimize
+
+Only optimize following parameters:
+
+|   Variable  | Start | Step | Stop |
+|:-----------:|-------|------|------|
+|  StartHour  | 3     | 1    | 23   |
+| MinPipLimit | 5     | 5    | 50   |
+
+
+#### Optimization restrictions
+
+Maximal drawdown 15%
+
+#### Parameters criteria selection
+
+Following criterias must be true:
+
+* Profit factor > 2
+* Number of trades during simulation > 30
+* More than 10 good sets are present in the simulation results (with profit factor > 2)
+
+Select the top set with maximum profit, maximum number of trades
+
+#### When we skip simulation?
+
+Whenever parameters criteria selection are not true then:
+
+* skip ths set of parameters
+* change start/end dates of simulations
+
+### Simulation
+
+#### File cleanup
+
+before simulation:
+
+* change `From:` and `To:` dates in the Strategy Tester (Increase by *4* month value in field `From:`; Increase by *2* month value in the field `To:`)
+* delete file `OrdersResultsT2.csv` from the folder `C:\Program Files (x86)\FxPro - Terminal2\tester\files`
+* if not done, create a folder for specific currency pair e.g.: `~\SIM\EURUSD`
+
+#### Perform Simulation
+
+* Insure folder `C:\Program Files (x86)\FxPro - Terminal2\tester\files` is empty or it does not contain file `OrdersResultsT2.csv`
+* Press button `Start` to initiate trades simulation
+
+Optional: check tab `Graph` of Strategy Tester to evaluate distribution of trade results
+
+#### Transfer of file to the collection folder
+
+right after simulation:
+
+* transfer file `OrdersResultsT2.csv` to the folder `~\SIM\******`
+* rename the file to reflect optimization round (e.g. `1.csv` see table below)
+
+**Note: sometimes there would be no file, then continue rename files to maintain consecutive names**
+
+See below table with examples:
+
+| Pair   | Round | FileName | FolderLocation |
+|--------|-------|----------|----------------|
+| USDCHF | 1     | 1.csv    | SIM/USDCHF'    |
+| USDCHF | 2     | 2.csv    | SIM/USDCHF'    |
+| USDCHF | 3     | no file  | SIM/USDCHF'    |
+| USDCHF | 4     | no file  | SIM/USDCHF'    |
+| USDCHF | 5     | 5.csv    | SIM/USDCHF'    |
+| USDCHF | 6     | 6.csv    | SIM/USDCHF'    |
+| USDCHF | 7     | 7.csv    | SIM/USDCHF'    |
+| EURUSD | 1     | 1.csv    | SIM/GBPUSD'    |
+| EURUSD | 2     | 2.csv    | SIM/GBPUSD'    |
+| EURUSD | 3     | 3.csv    | SIM/GBPUSD'    |
+| EURUSD | 4     | 4.csv    | SIM/GBPUSD'    |
+| EURUSD | 5     | 5.csv    | SIM/GBPUSD'    |
+| EURUSD | 6     | 6.csv    | SIM/GBPUSD'    |
+| EURUSD | 7     | 7.csv    | SIM/GBPUSD'    |
+
+
+#### Going to next optimization cycle after Simulation
+
+Do the following:
+
+* Check box `Optimization`
+* Reduce value `Month` of the Strategy Tester field `From:` by 2
+* Press button `Start` to initiate new Optimization
+
+### Data Aggregation
+
+Once the files are in the right folders use following code to aggregate data
+
+```{r message=FALSE, warning=FALSE}
+library(lazytrade)
+library(lubridate)
+library(tidyverse)
+
+# folders with results //change this path//
+DFOLDER <- "C:/Users/fxtrams/Documents/000_TradingRepo/FALCON_D/TS"
+
+DFR <- opt_aggregate_results(DFOLDER)
+
+```
+
+
+### Visualize data
+
+```{r message=FALSE, warning=FALSE}
+# visual way
+opt_create_graphs(DFR, graph_type = 'ts')
+
+```
+
+```{r message=FALSE, warning=FALSE}
+# visual way
+opt_create_graphs(DFR, graph_type = 'bars')
+
+```
+
+#### Save both graphs to pdf file
+
+```{r message=FALSE, warning=FALSE}
+# graphs in pdf
+opt_create_graphs(DFR,outp_path = getwd())
+
+```
+
+
+### Analyse the results
+
+#### Any Pair is better?
+
+```{r}
+DFR %>% 
+  group_by(Symbol) %>% 
+  summarise(PairGain = sum(Profit))
+```
+
+
+#### Any Pair/Direction is better?
+
+```{r}
+DFR %>% 
+  group_by(Symbol, OrderType) %>% 
+  summarise(PairGain = sum(Profit))
+```
