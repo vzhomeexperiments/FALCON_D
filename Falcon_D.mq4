@@ -242,7 +242,7 @@ int start()
      {
          
          //code that only executed once a bar
-         OrderProfitToCSV(T_Num(MagicNumber));                        //write previous orders profit results for auto analysis in R
+         OrderProfitToCSV(T_Num());                        //write previous orders profit results for auto analysis in R
          //get the Reinforcement Learning policy for specific Market Type
          //TradeAllowed is checking Macroeconomic events (derived from Decision Support System)          
          TradeAllowed = ReadCommandFromCSV(MagicNumber);              //read command from R to make sure trading is allowed
