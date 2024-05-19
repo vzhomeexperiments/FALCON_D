@@ -54,3 +54,18 @@ setx PATH_T4_I "%PATH_T4_T%\MQL4\Include"
 :: Utility character variables
 ::# ----------------------------------------------------------------------------------------
 
+::# ----------------------------------------------------------------------------------------
+:: Terminal Account Numbers and Passwords as Environmental Variables
+::# ----------------------------------------------------------------------------------------
+
+setx USR_T1 "123456"
+setx PS_T1 "1asdfojqioefj!"
+
+setx USR_T2 "123457"
+setx PS_T2 "2asdfojqioefj!"
+
+setx USR_T3 "123458"
+setx PS_T3 "3asdfojqioefj!"
+
+setx USR_T4 "123459"
+setx PS_T4 "4asdfojqioefj!"
