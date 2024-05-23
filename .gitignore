@@ -11,3 +11,5 @@ FALCON_D.Rproj
 .Rhistory
 Simulation/Y2016_SimulationFalconD.nb.html
 AUTO_BACKTEST/settings_falcond.ini
+AUTO_BACKTEST/Optimization/FalconDReport_GBPUSD.htm
+AUTO_BACKTEST/Backtest/FalconDReport_GBPUSD\[1\].htm

@@ -44,11 +44,11 @@ rem *************************************************
 for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyy.MM.dd"') do set TODAY=%%I
 
 :: Get the date 3 months ago in YYYY.MM.DD format using PowerShell
-for /f %%I in ('powershell -NoProfile -Command "(Get-Date).AddMonths(-3).ToString('yyyy.MM.dd')"') do set THREE_MONTHS_AGO=%%I
+for /f %%I in ('powershell -NoProfile -Command "(Get-Date).AddMonths(-1).ToString('yyyy.MM.dd')"') do set THREE_MONTHS_AGO=%%I
 
 :: Write dates to the ini file
 :: Define the path to your initiation file
-set "INIT_FILE=%PATH_DSS_Repo%\FALCON_D\AUTO_BACKTEST\settings_falcond.ini"
+set "INIT_FILE=%PATH_DSS_Repo%\FALCON_D\AUTO_BACKTEST\set_bkt_falcond.ini"
 
 :: Update the TestToDate parameter in the initiation file TestFromDate
 if exist "%INIT_FILE%" (
@@ -60,9 +60,9 @@ if exist "%INIT_FILE%" (
 	powershell -NoProfile -Command "(Get-Content '%INIT_FILE%') -replace 'Password=.*', 'Password=%PS_T1%' | Set-Content '%INIT_FILE%'"
 ) else (
     echo Initiation file not found: %INIT_FILE%
+	exit
 )
 
-endlocal
 
 rem *************************************************
 rem *** 2. Starts the terminal optimization after waiting 5 seconds ***
@@ -70,7 +70,15 @@ rem *************************************************
 
 ping localhost -n 5
 
-start "1" "%PATH_T1_T%\terminal.exe" /portable "%PATH_DSS_Repo%\FALCON_D\AUTO_BACKTEST\settings_falcond.ini"
+start "1" "%PATH_T1_T%\terminal.exe" /portable "%INIT_FILE%"
+
+:: Replace credentials to their dummy state
+:: Use PowerShell to replace the Login value
+	::powershell -NoProfile -Command "(Get-Content '%INIT_FILE%') -replace 'Login=.*', 'Login=123478' | Set-Content '%INIT_FILE%'"
+    :: Use PowerShell to replace the Password value
+	::powershell -NoProfile -Command "(Get-Content '%INIT_FILE%') -replace 'Password=.*', 'Password="ABCdaepaswD"' | Set-Content '%INIT_FILE%'"
+
+endlocal
 
 rem *************************************************
 rem *** 3. Starts all terminals again after waiting 30 seconds ***
