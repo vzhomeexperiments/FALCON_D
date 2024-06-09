@@ -70,7 +70,7 @@ rem *************************************************
 
 ping localhost -n 5
 
-start "1" "%PATH_T1_T%\terminal.exe" /portable "%INIT_FILE%"
+start /wait "1" "%PATH_T1_T%\terminal.exe" /portable "%INIT_FILE%"
 
 :: Replace credentials to their dummy state
 :: Use PowerShell to replace the Login value
