@@ -10,6 +10,7 @@
 #include <08_TerminalNumber.mqh>
 #include <096_ReadMarketTypeFromCSV.mqh>
 #include <10_isNewBar.mqh>
+#include <20_LogParameters.mqh>
 
 
 #property copyright "Copyright 2015, Black Algo Technologies Pte Ltd"
@@ -135,7 +136,7 @@ int     RetryInterval=100; // Pause Time before next retry (in milliseconds)
 int     MaxRetriesPerTick=10;
 
 string  InternalHeader2="----------Service Variables-----------";
-
+datetime myOrderOpenTime;
 double Stop,Take;
 double StopHidden,TakeHidden;
 int YenPairAdjustFactor;
@@ -368,8 +369,12 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
             if(!isFridayActive && TradeAllowed && FlagBuy && EntrySignal(CrossTriggered1)==1)
               { // Open Long Positions
                OrderNumber=OpenPositionMarket(OP_BUY,GetLot(IsSizingOn,Lots,Risk,YenPairAdjustFactor,Stop,P),Stop,Take,MagicNumber,Slippage,OnJournaling,P,IsECNbroker,MaxRetriesPerTick,RetryInterval);
-   
-               // Set Stop Loss value for Hidden SL
+ 
+               if(OrderSelect(OrderNumber, SELECT_BY_TICKET))myOrderOpenTime = OrderOpenTime();
+
+               // Log robot parameters (for dynamic optimization
+               LogParameters(MagicNumber,OrderNumber, myOrderOpenTime, StartHour, MinPipLimit, UseMAFilter, FastMAPeriod, SlowMAPeriod, RSI_NoBuyFilter,RSI_NoSellFilter,TimeMaxHold,Buy_True,Sell_True);
+                 // Set Stop Loss value for Hidden SL
                if(UseHiddenStopLoss) SetStopLossHidden(OnJournaling,IsVolatilityStopLossOn_Hidden,FixedStopLoss_Hidden,myATR,VolBasedSLMultiplier_Hidden,P,OrderNumber);
    
                // Set Take Profit value for Hidden TP
@@ -386,6 +391,11 @@ RSI_D14 = iRSI(Symbol(), PERIOD_D1, 14, PRICE_TYPICAL, 1);
             if(!isFridayActive && TradeAllowed && FlagSell && EntrySignal(CrossTriggered1)==2)
               { // Open Short Positions
                OrderNumber=OpenPositionMarket(OP_SELL,GetLot(IsSizingOn,Lots,Risk,YenPairAdjustFactor,Stop,P),Stop,Take,MagicNumber,Slippage,OnJournaling,P,IsECNbroker,MaxRetriesPerTick,RetryInterval);
+
+               if(OrderSelect(OrderNumber, SELECT_BY_TICKET))myOrderOpenTime = OrderOpenTime();
+
+               // Log robot parameters (for dynamic optimization
+               LogParameters(MagicNumber,OrderNumber, myOrderOpenTime, StartHour, MinPipLimit, UseMAFilter, FastMAPeriod, SlowMAPeriod, RSI_NoBuyFilter,RSI_NoSellFilter,TimeMaxHold,Buy_True,Sell_True);
    
                // Set Stop Loss value for Hidden SL
                if(UseHiddenStopLoss) SetStopLossHidden(OnJournaling,IsVolatilityStopLossOn_Hidden,FixedStopLoss_Hidden,myATR,VolBasedSLMultiplier_Hidden,P,OrderNumber);
