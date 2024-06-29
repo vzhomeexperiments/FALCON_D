@@ -84,9 +84,9 @@ rem *************************************************
 rem *** 3. Starts all terminals again after waiting 30 seconds ***
 rem *************************************************
 
-ping localhost -n 10
+::ping localhost -n 10
 
-call "%PATH_STUP%\MetaTraderAutoLaunch.cmd"
+::call "%PATH_STUP%\MetaTraderAutoLaunch.cmd"
 
 
 exit
